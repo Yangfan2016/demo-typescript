@@ -658,3 +658,164 @@ interface ThisType<T>{
     
 }
 ```
+
+## 模块和命名空间
+
+### 模块 （外部模块）
+> ts 沿用 es6 的模块概念
+
+- 导出
+
+StringValidator.ts
+```ts
+export interface StringValidator {
+    isSafe:boolena;
+}
+```
+- 导入
+
+test.ts
+```ts
+import { StringValidator } from "./StringValidator";
+
+class Validator implements StringValidator {
+   isSafe:boolean = true; 
+}
+
+```
+- 默认导出
+
+StringValidator.ts
+```ts
+export default {
+    version: "1.1.1"
+}
+```
+
+- 导入其他 js 库 (要想描述非 TypeScript 编写的类库的类型，我们需要声明类库所暴露出的 API )
+
+    - 外部模块
+ 
+    utils.d.ts
+    ```ts
+    declare module "url" {
+        export function parse() {
+            // ...
+        }
+    }
+    
+    ```
+    
+    test.ts
+    
+    ```ts
+    /// <reference path="utils.d.ts" />
+    import { parse } from "url";
+    
+    ```
+    
+    - 外部模块简写
+    > 简写模块里所有导出的类型将是 any
+    
+    utils.d.ts
+    ```ts
+    declare module "url";
+    
+    ```
+    
+    test.ts
+    ```ts
+    /// <reference path="utils.d.ts" />
+    import { parse } from "url";
+    // parse:any
+    ```
+    
+    - 模块声明通配符
+    
+    global.d.ts
+    ```ts
+    declare module "*.json";
+    ```
+
+
+### 命名空间 (内部模块)
+
+- 命名空间
+
+```ts
+
+namespace Validation {
+    export interface StringValidator {
+        isSafe:boolena;
+    }
+
+    export class Validator implements StringValidator {
+       isSafe:boolean = true; 
+    }
+}
+
+```
+
+- 分割到多个文件
+
+Validation.ts
+```ts
+
+namespace Validation {
+    export interface StringValidator {
+        isSafe:boolena;
+    }
+}
+
+```
+KlassValidation.ts
+```ts
+/// <reference path="Validation.ts" />
+namespace Validation {
+    export class Validator implements StringValidator {
+       isSafe:boolean = true; 
+    }
+}
+
+```
+
+- 别名
+
+```ts
+namespace Validation {
+    export interface StringValidator {
+        isSafe:boolena;
+    }
+}
+
+
+import SV = Validation.StringValidator;
+
+```
+
+- 使用其他的 js 库
+> 为了描述不是用 TypeScript 编写的类库的类型，我们需要声明类库导出的API。 由于大部分程序库只提供少数的顶级对象，命名空间是用来表示它们的一个好办法。  
+我们称其为声明是因为它不是外部程序的具体实现。 我们通常在 `.d.ts` 里写这些声明
+
+D3.d.ts
+```ts
+declare namespace D3 {
+  export interface Selectors {
+    select: {
+      (selector: string): Selection;
+      (element: EventTarget): Selection;
+    };
+  }
+
+  export interface Event {
+    x: number;
+    y: number;
+  }
+
+  export interface Base extends Selectors {
+    event: Event;
+  }
+}
+
+declare var d3: D3.Base;
+```
